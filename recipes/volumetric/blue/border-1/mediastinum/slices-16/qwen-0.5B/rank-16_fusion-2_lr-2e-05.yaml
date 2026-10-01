@@ -1,0 +1,28 @@
+preparation:
+  color: blue
+  thickness: 1
+  center: 40
+  width: 400
+training:
+  language_model: Qwen/Qwen2.5-0.5B-Instruct
+  vision_source: MagicXin/Med3DVLM-Qwen-2.5-7B
+  vision_revision: 7d192aef4b06501a6ba191a474e6d684ca492824
+  revision: main
+  cache_dir: null
+  offline: false
+  precision: bf16
+  heads: 4
+  rank: 16
+  fusion_layers: 2
+  slices: 16
+  image_size: 256
+  max_length: 1024
+  epochs: 25
+  batch_size: 4
+  lr: 2.0e-05
+  lora_l2: 0.0001
+  weight_decay: 0.02
+  warmup_steps: 500
+  distillation_epochs: 1
+  accumulation_steps: 1
+  workers: 0

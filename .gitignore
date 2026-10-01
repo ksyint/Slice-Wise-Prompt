@@ -8,3 +8,6 @@ outputs/
 *.ckpt
 *.pdf
 .env
+
+/weights/
+*.safetensors

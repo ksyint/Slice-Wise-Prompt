@@ -14,16 +14,17 @@ INDEX = ROOT / 'recipes/index.jsonl'
 def compile_recipes():
     baseline = yaml.safe_load((ROOT / 'configs/prompt_vqa.yaml').read_text())
     recipes = []
-    for color, thickness, window, slices, rank, rate, pixels, heads in product(
-            ('blue', 'red'), (1, 3), WINDOWS, (8, 16), (8, 16), (.0003, .001), (32, 64), (4, 8)):
+    for color, thickness, window, slices, size, rank, fusion, rate in product(
+            ('blue', 'red'), (1, 3), WINDOWS, (16, 32), ('0.5B', '1.5B', '3B'), (8, 16), (1, 2), (1e-5, 2e-5)):
         preparation = dict(color=color, thickness=thickness, **WINDOWS[window])
-        training = dict(baseline, slices=slices, rank=rank, lr=rate, image_size=pixels, heads=heads)
-        folder = Path('recipes/volumetric') / color / f'border-{thickness}' / window / f'slices-{slices}'
-        filename = f'pixels-{pixels}_rank-{rank}_heads-{heads}_lr-{rate:g}.yaml'
+        training = dict(baseline, slices=slices, rank=rank, lr=rate, fusion_layers=fusion,
+                        language_model=f'Qwen/Qwen2.5-{size}-Instruct')
+        folder = Path('recipes/volumetric') / color / f'border-{thickness}' / window / f'slices-{slices}' / f'qwen-{size}'
+        filename = f'rank-{rank}_fusion-{fusion}_lr-{rate:g}.yaml'
         path = ROOT / folder / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(yaml.safe_dump(dict(preparation=preparation, training=training), sort_keys=False))
-        recipes.append(dict(name=f'{color}-{thickness}-{window}-{slices}-{pixels}-{rank}-{heads}-{rate:g}',
+        recipes.append(dict(name=f'{color}-{thickness}-{window}-{slices}-{size}-{rank}-{fusion}-{rate:g}',
                             recipe=str(path.relative_to(ROOT))))
     INDEX.write_text(''.join(json.dumps(row) + '\n' for row in recipes))
     return recipes

@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slice_prompt.preprocess.volume import load_volume
+from slice_prompt.preprocess.volume import load_pair
 from slice_prompt.preprocess.splits import patient_split
 from slice_prompt.preprocess.contours import render_prompt
 from slice_prompt.preprocess.conversation import rewrite_question, system_prompt
@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--width', type=float, default=1500)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--split', action='store_true')
+    parser.add_argument('--split-fractions', type=float, nargs=3, default=(.7, .1, .2))
     args = parser.parse_args()
     root = Path(args.manifest).resolve().parent
     output = Path(args.output).resolve()
@@ -28,7 +29,9 @@ def main():
     records = [json.loads(line) for line in Path(args.manifest).read_text().splitlines() if line.strip()]
     prepared = []
     for index, record in enumerate(records):
-        volume, mask = load_volume(root / record['volume']), load_volume(root / record['mask'])
+        volume, mask = load_pair(root / record['volume'], root / record['mask'])
+        if record.get('mask_labels'):
+            mask = np.isin(mask, record['mask_labels'])
         rgb, contours = render_prompt(volume, mask, args.color, args.thickness, args.center, args.width)
         sample = output / f'sample_{index:06d}'
         sample.mkdir(exist_ok=True)
@@ -47,7 +50,7 @@ def main():
                                  {'role': 'user', 'content': question},
                                  {'role': 'vision', 'content': {'volume': str((root / record['volume']).resolve()), 'prompt_png': pngs}},
                                  {'role': 'assistant', 'content': answer}]))
-    splits = patient_split(prepared, args.seed) if args.split else {'prepared': prepared}
+    splits = patient_split(prepared, args.seed, args.split_fractions) if args.split else {'prepared': prepared}
     for key, rows in splits.items():
         (output / f'{key}.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
     print(json.dumps({key: len(value) for key, value in splits.items()}))
