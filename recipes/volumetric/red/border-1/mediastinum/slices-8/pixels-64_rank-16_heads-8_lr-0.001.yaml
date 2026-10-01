@@ -1,0 +1,16 @@
+preparation:
+  color: red
+  thickness: 1
+  center: 40
+  width: 400
+training:
+  hidden_dim: 64
+  heads: 8
+  max_slices: 64
+  rank: 16
+  slices: 8
+  image_size: 64
+  epochs: 25
+  batch_size: 4
+  lr: 0.001
+  lora_l2: 0.0001

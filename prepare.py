@@ -5,7 +5,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from utils.prompts import load_volume, patient_split, render_prompt, rewrite_question, system_prompt
+from slice_prompt.preprocess.volume import load_volume
+from slice_prompt.preprocess.splits import patient_split
+from slice_prompt.preprocess.contours import render_prompt
+from slice_prompt.preprocess.conversation import rewrite_question, system_prompt
 
 
 def main():
