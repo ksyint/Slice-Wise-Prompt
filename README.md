@@ -92,12 +92,12 @@ Checkpoints store trainable fusion/LoRA/head tensors, optimizer/scaler/scheduler
 
 ## Preparation and decoder recipes
 
-The **384 executable recipes** pair contour preparation with real pretrained training. Axes are blue/red contours, one/three-pixel borders, lung/mediastinum windows, 16/32 slices, all three Qwen2.5 sizes, rank 8/16, one/two fusion blocks and learning rates `1e-5`/`2e-5`. Every field is consumed by preparation, the pretrained model factory or optimizer.
+The **384 executable recipes** pair contour preparation with real pretrained training. Recipes accept YAML or a Python file assigning a literal dictionary to `recipe`, with `preparation` and `training` sections. Axes are blue/red contours, one/three-pixel borders, lung/mediastinum windows, 16/32 slices, all three Qwen2.5 sizes, rank 8/16, one/two fusion blocks and learning rates `1e-5`/`2e-5`. Every field is consumed by preparation, the pretrained model factory or optimizer.
 
 ```bash
 python prompt.py catalog --list
 python prompt.py recipe \
-  --recipe recipes/volumetric/blue/border-1/lung/slices-32/qwen-1.5B/rank-16_fusion-2_lr-2e-05.yaml \
+  --recipe recipes/blue/lung/blue-1-lung-32-1.5B-16-2-2e-05.py \
   --manifest data/source.jsonl --output outputs/recipe15b --split --device cuda
 python prompt.py catalog --compile
 ```
@@ -106,7 +106,7 @@ python prompt.py catalog --compile
 
 ## Dataset records, resumable sessions, and reports
 
-`slice_prompt/pipeline/volumes` contains volume preparation, cache handling, and preparation commands. Its `records` package validates source and prepared rows and builds answer vocabularies. `slice_prompt/models/qwen` keeps model adaptation with its checkpoint contract, while `slice_prompt/experiments` groups training, resumable inference, and answer reports. Record examples and schemas are together under `examples/records`.
+`slice_prompt` contains volume preparation, cache handling, and preparation commands. Its `records` package validates source and prepared rows and builds answer vocabularies. `slice_prompt/models` keeps model adaptation with its checkpoint contract, while `slice_prompt/experiments` groups training, resumable inference, and answer reports. Record examples and schemas are together under `examples`.
 
 ```bash
 python prompt.py manifest --manifest data/source.jsonl

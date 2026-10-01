@@ -7,12 +7,12 @@ from pathlib import Path
 
 import torch
 
-from slice_prompt.pipeline.volumes.records.schema import manifest_digest, read_manifest, write_manifest
-from slice_prompt.pipeline.volumes.records.vocabulary import AnswerVocabulary
-from slice_prompt.pipeline.volumes.processing import PromptDataset, pack_rows
-from slice_prompt.models.qwen.checkpoints import atomic_json, checkpoint_identity
+from slice_prompt.records.schema import manifest_digest, read_manifest, write_manifest
+from slice_prompt.records.vocabulary import AnswerVocabulary
+from slice_prompt.processing import PromptDataset, pack_rows
+from slice_prompt.models.checkpoints import atomic_json, checkpoint_identity
 from slice_prompt.experiments.training import require_cuda
-from slice_prompt.models.qwen.adaptation import QwenSliceVLM
+from slice_prompt.models.adaptation import QwenSliceVLM
 
 
 class PredictionJournal:

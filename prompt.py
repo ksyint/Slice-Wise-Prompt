@@ -3,12 +3,11 @@
 import argparse
 import json
 import torch as th
-import yaml
 import torch
 from functools import partial
 from pathlib import Path
 from torch.utils.data import DataLoader
-from slice_prompt.pipeline.volumes.processing import pack_rows, PromptDataset
+from slice_prompt.processing import pack_rows, PromptDataset
 from slice_prompt.experiments.training import (
     add_dict_to_argparser,
     create_model_and_data,
@@ -19,14 +18,15 @@ from slice_prompt.experiments.training import (
     TrainLoop,
     evaluate_records,
 )
-from slice_prompt.models.qwen.adaptation import QwenSliceVLM, MED3D_ID, MED3D_REVISION
+from slice_prompt.models.adaptation import QwenSliceVLM, MED3D_ID, MED3D_REVISION
 from huggingface_hub import snapshot_download
-from slice_prompt.pipeline.volumes.commands import (
+from slice_prompt.commands import (
     export_manifest_cli,
     prepare_cli,
     segment_cli,
     run_recipe_cli,
     catalog_cli,
+    read_config,
 )
 
 
@@ -52,14 +52,14 @@ def train_main():
     random.seed(args.seed)
     np.random.seed(args.seed)
     config = dict(**model_defaults(), **data_defaults(), **training_defaults())
-    config.update(yaml.safe_load(Path(args.config).read_text()))
+    config.update(read_config(args.config))
     state = th.load(args.checkpoint, map_location=device, weights_only=False) if args.checkpoint else None
     if state:
         config = state['config'].copy()
     config.update({key: getattr(args, key) for key in config if getattr(args, key, None) is not None})
     model, data, tokenizer, classes, counts = create_model_and_data(config, args.manifest, device)
-    from slice_prompt.pipeline.volumes.records.schema import manifest_digest
-    from slice_prompt.models.qwen.checkpoints import check_resume
+    from slice_prompt.records.schema import manifest_digest
+    from slice_prompt.models.checkpoints import check_resume
 
     data_identity = manifest_digest(data.rows)
     if state:
@@ -186,10 +186,10 @@ def download_weights_cli():
 def main():
     import sys
 
-    from slice_prompt.pipeline.volumes.records.schema import manifest_cli
-    from slice_prompt.pipeline.volumes.records.vocabulary import vocabulary_cli
-    from slice_prompt.pipeline.volumes.cache import cache_prepare_cli
-    from slice_prompt.models.qwen.checkpoints import checkpoint_cli
+    from slice_prompt.records.schema import manifest_cli
+    from slice_prompt.records.vocabulary import vocabulary_cli
+    from slice_prompt.cache import cache_prepare_cli
+    from slice_prompt.models.checkpoints import checkpoint_cli
     from slice_prompt.experiments.inference import session_cli
     from slice_prompt.experiments.grouped import report_cli
 
