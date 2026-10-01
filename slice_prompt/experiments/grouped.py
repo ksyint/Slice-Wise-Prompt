@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slice_prompt.engine.training.loop import evaluate_records, normalize
+from slice_prompt.experiments.training import evaluate_records, normalize
 
 
 def read_predictions(path):

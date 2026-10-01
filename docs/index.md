@@ -10,11 +10,11 @@
 
 ## Evaluation
 
-- [Grouped question-answer reports](evaluation/grouped-vqa.md)
-- [Patient-level answer statistics](evaluation/patient-bootstrap.md)
+- [Grouped question-answer reports](experiments/grouped-vqa.md)
+- [Patient-level answer statistics](experiments/patient-bootstrap.md)
 
 ## Runtime
 
-- [Resumable answer generation](runtime/inference-session.md)
-- [Prepared pretrained directories](runtime/offline-models.md)
-- [Epoch checkpoint continuation](runtime/training-resume.md)
+- [Resumable answer generation](experiments/inference-session.md)
+- [Prepared pretrained directories](experiments/offline-models.md)
+- [Epoch checkpoint continuation](experiments/training-resume.md)

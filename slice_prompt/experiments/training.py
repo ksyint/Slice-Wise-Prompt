@@ -4,7 +4,7 @@ import math
 import torch
 import torch.nn.functional as F
 import re
-from slice_prompt.data.volumes.processing import PromptDataset
+from slice_prompt.pipeline.volumes.processing import PromptDataset
 from slice_prompt.models.qwen.adaptation import (
     QwenSliceVLM,
     MED3D_ID,
@@ -63,9 +63,9 @@ def add_dict_to_argparser(parser, defaults):
 
 
 def create_model_and_data(config, manifest, device):
-    from slice_prompt.data.records.schema import read_manifest
-    from slice_prompt.data.records.vocabulary import AnswerVocabulary
-    from slice_prompt.engine.checkpoints.runtime import validate_training_config
+    from slice_prompt.pipeline.volumes.records.schema import read_manifest
+    from slice_prompt.pipeline.volumes.records.vocabulary import AnswerVocabulary
+    from slice_prompt.models.qwen.checkpoints import validate_training_config
 
     validate_training_config(config)
     require_cuda(device)
@@ -121,7 +121,7 @@ class TrainLoop:
         self.scheduler.load_state_dict(state['scheduler'])
         self.scaler.load_state_dict(state['scaler'])
         self.step, self.start_epoch = state['step'], state['epoch']
-        from slice_prompt.engine.checkpoints.runtime import restore_random_state
+        from slice_prompt.models.qwen.checkpoints import restore_random_state
 
         restore_random_state(state.get('random_state'), self.loader)
 
@@ -185,7 +185,7 @@ class TrainLoop:
             )
 
     def save(self, output, tokenizer, classes, history):
-        from slice_prompt.engine.checkpoints.runtime import save_training_checkpoint
+        from slice_prompt.models.qwen.checkpoints import save_training_checkpoint
 
         save_training_checkpoint(self, output, tokenizer, classes, history)
 

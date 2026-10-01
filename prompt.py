@@ -8,8 +8,8 @@ import torch
 from functools import partial
 from pathlib import Path
 from torch.utils.data import DataLoader
-from slice_prompt.data.volumes.processing import pack_rows, PromptDataset
-from slice_prompt.engine.training.loop import (
+from slice_prompt.pipeline.volumes.processing import pack_rows, PromptDataset
+from slice_prompt.experiments.training import (
     add_dict_to_argparser,
     create_model_and_data,
     data_defaults,
@@ -21,7 +21,7 @@ from slice_prompt.engine.training.loop import (
 )
 from slice_prompt.models.qwen.adaptation import QwenSliceVLM, MED3D_ID, MED3D_REVISION
 from huggingface_hub import snapshot_download
-from slice_prompt.data.preparation.commands import (
+from slice_prompt.pipeline.volumes.commands import (
     export_manifest_cli,
     prepare_cli,
     segment_cli,
@@ -32,7 +32,7 @@ from slice_prompt.data.preparation.commands import (
 
 def create_argparser():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--config', default='configs/prompt_vqa.yaml')
+    parser.add_argument('--config', default='recipes/prompt_vqa.yaml')
     parser.add_argument('--manifest', required=True)
     parser.add_argument('--checkpoint', help='Resume the trainable weights and optimizer from last.pt.')
     parser.add_argument('--output', default='outputs/default')
@@ -58,8 +58,8 @@ def train_main():
         config = state['config'].copy()
     config.update({key: getattr(args, key) for key in config if getattr(args, key, None) is not None})
     model, data, tokenizer, classes, counts = create_model_and_data(config, args.manifest, device)
-    from slice_prompt.data.records.schema import manifest_digest
-    from slice_prompt.engine.checkpoints.runtime import check_resume
+    from slice_prompt.pipeline.volumes.records.schema import manifest_digest
+    from slice_prompt.models.qwen.checkpoints import check_resume
 
     data_identity = manifest_digest(data.rows)
     if state:
@@ -186,12 +186,12 @@ def download_weights_cli():
 def main():
     import sys
 
-    from slice_prompt.data.records.schema import manifest_cli
-    from slice_prompt.data.records.vocabulary import vocabulary_cli
-    from slice_prompt.data.preparation.cache import cache_prepare_cli
-    from slice_prompt.engine.checkpoints.runtime import checkpoint_cli
-    from slice_prompt.engine.inference.session.runner import session_cli
-    from slice_prompt.evaluation.vqa.grouped import report_cli
+    from slice_prompt.pipeline.volumes.records.schema import manifest_cli
+    from slice_prompt.pipeline.volumes.records.vocabulary import vocabulary_cli
+    from slice_prompt.pipeline.volumes.cache import cache_prepare_cli
+    from slice_prompt.models.qwen.checkpoints import checkpoint_cli
+    from slice_prompt.experiments.inference import session_cli
+    from slice_prompt.experiments.grouped import report_cli
 
     commands = {
         'manifest': manifest_cli,

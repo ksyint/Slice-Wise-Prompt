@@ -9,14 +9,14 @@ import sys
 import yaml
 from pathlib import Path
 from PIL import Image
-from slice_prompt.data.volumes.processing import (
+from slice_prompt.pipeline.volumes.processing import (
     load_pair,
     patient_split,
     render_prompt,
     rewrite_question,
     system_prompt,
 )
-from slice_prompt.engine.training.loop import require_cuda
+from slice_prompt.experiments.training import require_cuda
 from itertools import product
 
 
@@ -207,7 +207,7 @@ INDEX = catalog_ROOT / 'recipes/index.jsonl'
 
 
 def compile_recipes():
-    baseline = yaml.safe_load((catalog_ROOT / 'configs/prompt_vqa.yaml').read_text())
+    baseline = yaml.safe_load((catalog_ROOT / 'recipes/prompt_vqa.yaml').read_text())
     recipes = []
     for color, thickness, window, slices, size, rank, fusion, rate in product(
         ('blue', 'red'), (1, 3), WINDOWS, (16, 32), ('0.5B', '1.5B', '3B'), (8, 16), (1, 2), (1e-5, 2e-5)

@@ -10,8 +10,8 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 from PIL import Image
 
-from slice_prompt.data.records.schema import read_manifest, write_manifest
-from slice_prompt.data.volumes.processing import (
+from slice_prompt.pipeline.volumes.records.schema import read_manifest, write_manifest
+from slice_prompt.pipeline.volumes.processing import (
     load_pair,
     patient_split,
     render_prompt,

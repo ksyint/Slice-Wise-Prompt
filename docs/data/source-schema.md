@@ -6,4 +6,4 @@ Each source JSONL row contains `patient_id`, `volume`, `mask`, `question`, `answ
 python prompt.py manifest --manifest data/source.jsonl --output reports/source.json
 ```
 
-The reader validates nonempty text, Boolean question type, existing paths, unique question IDs, and optional positive `mask_labels`. Explicit `id` fields remain unchanged. Otherwise an ID is derived from the patient, volume, mask, question, and answer. See [source-record.json](../../schemas/source-record.json) for the portable shape.
+The reader validates nonempty text, Boolean question type, existing paths, unique question IDs, and optional positive `mask_labels`. Explicit `id` fields remain unchanged. Otherwise an ID is derived from the patient, volume, mask, question, and answer. See [source-record.json](../../examples/records/source-record.json) for the portable shape.

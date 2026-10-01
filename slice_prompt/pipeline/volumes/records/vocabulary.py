@@ -7,7 +7,7 @@ import unicodedata
 from collections import Counter
 from pathlib import Path
 
-from slice_prompt.data.records.schema import manifest_digest, read_manifest
+from slice_prompt.pipeline.volumes.records.schema import manifest_digest, read_manifest
 
 
 def canonical_answer(value, lowercase=False):

@@ -7,11 +7,11 @@ from pathlib import Path
 
 import torch
 
-from slice_prompt.data.records.schema import manifest_digest, read_manifest, write_manifest
-from slice_prompt.data.records.vocabulary import AnswerVocabulary
-from slice_prompt.data.volumes.processing import PromptDataset, pack_rows
-from slice_prompt.engine.checkpoints.runtime import atomic_json, checkpoint_identity
-from slice_prompt.engine.training.loop import require_cuda
+from slice_prompt.pipeline.volumes.records.schema import manifest_digest, read_manifest, write_manifest
+from slice_prompt.pipeline.volumes.records.vocabulary import AnswerVocabulary
+from slice_prompt.pipeline.volumes.processing import PromptDataset, pack_rows
+from slice_prompt.models.qwen.checkpoints import atomic_json, checkpoint_identity
+from slice_prompt.experiments.training import require_cuda
 from slice_prompt.models.qwen.adaptation import QwenSliceVLM
 
 

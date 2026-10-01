@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 import torch
 
-from slice_prompt.data.records.vocabulary import AnswerVocabulary
+from slice_prompt.pipeline.volumes.records.vocabulary import AnswerVocabulary
 
 
 def validate_training_config(config):

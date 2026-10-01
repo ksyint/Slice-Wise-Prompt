@@ -78,7 +78,7 @@ python prompt.py prepare --manifest data/pmc_source.jsonl --output outputs/pmc_p
 ## Train, resume and evaluate
 
 ```bash
-python prompt.py train --config configs/prompt_vqa.yaml --manifest outputs/prepared/train.jsonl \
+python prompt.py train --config recipes/prompt_vqa.yaml --manifest outputs/prepared/train.jsonl \
   --cache-dir weights/cache --device cuda --output outputs/qwen15b
 python prompt.py train --checkpoint outputs/qwen15b/last.pt --manifest outputs/prepared/train.jsonl \
   --vision-source weights/pretrained/med3d --language-model weights/pretrained/qwen \
@@ -106,7 +106,7 @@ python prompt.py catalog --compile
 
 ## Dataset records, resumable sessions, and reports
 
-Record validation, visual preparation, model adaptation, training state, and answer reporting live in separate nested packages under `slice_prompt/data`, `slice_prompt/models`, `slice_prompt/engine`, and `slice_prompt/evaluation`.
+`slice_prompt/pipeline/volumes` contains volume preparation, cache handling, and preparation commands. Its `records` package validates source and prepared rows and builds answer vocabularies. `slice_prompt/models/qwen` keeps model adaptation with its checkpoint contract, while `slice_prompt/experiments` groups training, resumable inference, and answer reports. Record examples and schemas are together under `examples/records`.
 
 ```bash
 python prompt.py manifest --manifest data/source.jsonl
