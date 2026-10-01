@@ -94,10 +94,12 @@ Checkpoints store trainable fusion/LoRA/head tensors, optimizer/scaler/scheduler
 
 The **384 executable recipes** pair contour preparation with real pretrained training. Recipes accept YAML or a Python file assigning a literal dictionary to `recipe`, with `preparation` and `training` sections. Axes are blue/red contours, one/three-pixel borders, lung/mediastinum windows, 16/32 slices, all three Qwen2.5 sizes, rank 8/16, one/two fusion blocks and learning rates `1e-5`/`2e-5`. Every field is consumed by preparation, the pretrained model factory or optimizer.
 
+Recipes are grouped by contour color, CT window, and Qwen size. The 3B groups separate 16-slice and 32-slice runs. Each parent keeps representative recipes beside its subgroups, and `recipes/index.jsonl` maps experiment names to their configuration files.
+
 ```bash
 python prompt.py catalog --list
 python prompt.py recipe \
-  --recipe recipes/blue/lung/blue-1-lung-32-1.5B-16-2-2e-05.py \
+  --recipe recipes/blue/lung/qwen-1.5B/blue-1-lung-32-1.5B-16-2-2e-05.py \
   --manifest data/source.jsonl --output outputs/recipe15b --split --device cuda
 python prompt.py catalog --compile
 ```

@@ -260,6 +260,10 @@ def compile_recipes():
         folder = Path('recipes') / color
         if (thickness, window, slices, size, rank, fusion) != (1, 'lung', 16, '0.5B', 16, 1):
             folder /= window
+            if (thickness, slices, size, rank, fusion) != (1, 16, '1.5B', 16, 1):
+                folder /= f'qwen-{size}'
+                if size == '3B' and (thickness, slices, rank, fusion) != (1, 16, 16, 1):
+                    folder /= f'slices-{slices}'
         pending.append((key, folder / name, dict(preparation=preparation, training=training), name))
     python_paths = set(sorted(key for key, _, _, _ in pending)[:108])
     for key, relative, value, name in pending:
