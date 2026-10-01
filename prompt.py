@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 from torch.utils.data import DataLoader
 from slice_prompt.processing import pack_rows, PromptDataset
-from slice_prompt.experiments.training import (
+from slice_prompt.experiments.runtime.training import (
     add_dict_to_argparser,
     create_model_and_data,
     data_defaults,
@@ -190,7 +190,7 @@ def main():
     from slice_prompt.records.vocabulary import vocabulary_cli
     from slice_prompt.cache import cache_prepare_cli
     from slice_prompt.models.checkpoints import checkpoint_cli
-    from slice_prompt.experiments.inference import session_cli
+    from slice_prompt.experiments.runtime.inference import session_cli
     from slice_prompt.experiments.grouped import report_cli
 
     commands = {

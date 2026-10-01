@@ -108,7 +108,7 @@ python prompt.py catalog --compile
 
 ## Dataset records, resumable sessions, and reports
 
-`slice_prompt` contains volume preparation, cache handling, and preparation commands. Its `records` package validates source and prepared rows and builds answer vocabularies. `slice_prompt/models` keeps model adaptation with its checkpoint contract, while `slice_prompt/experiments` groups training, resumable inference, and answer reports. Record examples and schemas are together under `examples`.
+`slice_prompt` contains volume preparation, cache handling, and preparation commands. Its `records` package validates source and prepared rows and builds answer vocabularies. `slice_prompt/models` keeps model adaptation with its checkpoint contract. `slice_prompt/experiments` keeps grouped answer reports beside the training and resumable inference modules in `runtime`. Record examples and schemas are together under `examples`.
 
 ```bash
 python prompt.py manifest --manifest data/source.jsonl

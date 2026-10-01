@@ -11,7 +11,7 @@ from slice_prompt.records.schema import manifest_digest, read_manifest, write_ma
 from slice_prompt.records.vocabulary import AnswerVocabulary
 from slice_prompt.processing import PromptDataset, pack_rows
 from slice_prompt.models.checkpoints import atomic_json, checkpoint_identity
-from slice_prompt.experiments.training import require_cuda
+from slice_prompt.experiments.runtime.training import require_cuda
 from slice_prompt.models.adaptation import QwenSliceVLM
 
 

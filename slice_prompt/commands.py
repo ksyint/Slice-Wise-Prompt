@@ -17,7 +17,7 @@ from slice_prompt.processing import (
     rewrite_question,
     system_prompt,
 )
-from slice_prompt.experiments.training import require_cuda
+from slice_prompt.experiments.runtime.training import require_cuda
 from itertools import product
 from pprint import pformat
 
