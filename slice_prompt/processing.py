@@ -129,14 +129,20 @@ class PromptDataset(Dataset):
         volume = np.load(self.root / row['prompt'], allow_pickle=False)
         if volume.ndim != 4 or volume.shape[1] != 3 or not np.isfinite(volume).all():
             raise ValueError('Prompt array must be finite (Z,3,H,W).')
-        indices = np.linspace(0, len(volume) - 1, self.slices).round().astype(int)
+        from slice_prompt.volumes.selection import uniform_indices, validate_indices
+
+        indices = (
+            validate_indices(row['slice_indices'], len(volume), self.slices)
+            if row.get('slice_indices') is not None
+            else uniform_indices(len(volume), self.slices)
+        )
         tensor = F.interpolate(
             torch.tensor(volume[indices], dtype=torch.float32),
             size=(self.image_size, self.image_size),
             mode='bilinear',
             align_corners=False,
         )
-        return dict(row, tensor=tensor)
+        return dict(row, tensor=tensor, prompt=str((self.root / row['prompt']).resolve()))
 
 
 def pack_rows(rows, tokenizer, classes, max_length=1024, training=True):
@@ -172,6 +178,7 @@ def pack_rows(rows, tokenizer, classes, max_length=1024, training=True):
         valid[i, : len(ids)] = 1
         question[i, : prompt_lengths[i]] = True
     return dict(
+        records=[{key: value for key, value in row.items() if key != 'tensor'} for row in rows],
         volumes=torch.stack([row['tensor'] for row in rows]),
         input_ids=tokens,
         labels=targets,

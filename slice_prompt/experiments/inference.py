@@ -10,7 +10,7 @@ import torch
 from slice_prompt.records.schema import manifest_digest, read_manifest, write_manifest
 from slice_prompt.records.vocabulary import AnswerVocabulary
 from slice_prompt.processing import PromptDataset, pack_rows
-from slice_prompt.models.checkpoints import atomic_json, checkpoint_identity
+from slice_prompt.models.checkpoints import atomic_json, bundle_checkpoint_identity, read_inference_checkpoint
 from slice_prompt.experiments.training import require_cuda
 from slice_prompt.models.adaptation import QwenSliceVLM
 
@@ -107,7 +107,7 @@ class InferenceSession:
         self.max_new_tokens = int(max_new_tokens)
         identity = {
             'format': 'slice-inference-v1',
-            'checkpoint': checkpoint_identity(checkpoint),
+            'checkpoint': bundle_checkpoint_identity(checkpoint),
             'manifest_digest': manifest_digest(self.rows),
             'overrides': self.overrides,
             'max_new_tokens': self.max_new_tokens,
@@ -119,7 +119,7 @@ class InferenceSession:
         self.config = None
 
     def configure(self):
-        state = torch.load(self.checkpoint, map_location=self.device, weights_only=False)
+        state = read_inference_checkpoint(self.checkpoint, self.device)
         self.config = dict(state['config'])
         for name in ('cache_dir', 'language_model', 'vision_source'):
             if self.overrides[name] is not None:

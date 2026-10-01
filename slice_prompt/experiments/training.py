@@ -1,17 +1,13 @@
 """Mixed-precision slice prompting and answer metrics."""
 
-import math
 import torch
-import torch.nn.functional as F
 import re
 from slice_prompt.processing import PromptDataset
 from slice_prompt.models.adaptation import (
     QwenSliceVLM,
     MED3D_ID,
     MED3D_REVISION,
-    class_balanced_focal,
     Med3DTeacher,
-    sigmoid_distillation,
 )
 
 
@@ -102,15 +98,13 @@ class TrainLoop:
             lr=config['lr'],
             betas=(0.9, 0.98),
         )
-        total = math.ceil(len(loader) / config['accumulation_steps']) * config['epochs']
+        from slice_prompt.models.optimization import build_optimizer, make_schedule
+        from slice_prompt.models.objectives import AnswerObjective
 
-        def factor(step):
-            warmup = config['warmup_steps']
-            if step < warmup:
-                return (step + 1) / max(1, warmup)
-            return 0.5 * (1 + math.cos(math.pi * min(1, (step - warmup) / max(1, total - warmup))))
-
-        self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, factor)
+        if config.get('named_optimizer_groups', False):
+            self.optimizer, self.optimizer_groups = build_optimizer(model, config)
+        self.scheduler = make_schedule(self.optimizer, config, len(loader))
+        self.objective = AnswerObjective(self.counts, config)
         self.scaler = torch.amp.GradScaler('cuda', enabled=config['precision'] == 'fp16')
         self.step, self.start_epoch = 0, 0
         self.teacher = None
@@ -127,61 +121,45 @@ class TrainLoop:
 
     def forward_loss(self, batch):
         batch = {
-            name: value.to(self.device) if isinstance(value, torch.Tensor) else value for name, value in batch.items()
+            name: value.to(self.device) if isinstance(value, torch.Tensor) else value
+            for name, value in batch.items()
         }
         with torch.autocast('cuda', dtype=self.model.dtype):
             output = self.model(batch)
-            labels = batch['class_labels']
-            closed = labels >= 0
-            loss = output['classes'].sum() * 0
-            if closed.any():
-                loss = loss + class_balanced_focal(output['classes'][closed].float(), labels[closed], self.counts)
-            shifted = batch['labels'][:, 1:]
-            if (shifted != -100).any():
-                loss = loss + F.cross_entropy(
-                    output['logits'][:, :-1].float().reshape(-1, output['logits'].shape[-1]),
-                    shifted.reshape(-1),
-                    ignore_index=-100,
-                )
-            loss = loss + self.config['lora_l2'] * self.model.lora_penalty()
-            if self.teacher is not None:
-                targets = self.teacher(output['native'], batch['prompts'])
-                projected = self.model.distill_projection(output['representation'])
-                loss = loss + sigmoid_distillation(
-                    projected.float(), targets, self.model.log_scale, self.model.log_bias
-                )
-        if not torch.isfinite(loss):
-            raise RuntimeError('Nonfinite VQA objective.')
+            loss, self.last_losses = self.objective(self.model, output, batch, self.teacher)
         return loss
 
     def run_loop(self):
+        from slice_prompt.models.monitor import EpochMonitor
+        from slice_prompt.models.optimization import optimizer_update
+
         for epoch in range(self.start_epoch, self.config['epochs']):
             if epoch < self.config['distillation_epochs'] and self.teacher is None:
                 self.teacher = Med3DTeacher(self.config, self.device)
             if epoch >= self.config['distillation_epochs'] and self.teacher is not None:
                 self.teacher = None
                 torch.cuda.empty_cache()
+            monitor = EpochMonitor(self.device, epoch + 1)
+            monitor.start()
             self.model.train()
             self.optimizer.zero_grad(set_to_none=True)
             losses = []
             accumulation = self.config['accumulation_steps']
             for index, batch in enumerate(self.loader):
                 loss = self.forward_loss(batch)
+                monitor.record_loss(self.last_losses)
                 block_size = min(accumulation, len(self.loader) - (index // accumulation) * accumulation)
                 self.scaler.scale(loss / block_size).backward()
                 losses.append(float(loss.detach()))
                 if (index + 1) % accumulation == 0 or index + 1 == len(self.loader):
-                    self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-                    previous_scale = self.scaler.get_scale()
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
-                    if self.scaler.get_scale() >= previous_scale:
-                        self.scheduler.step()
-                        self.step += 1
-                    self.optimizer.zero_grad(set_to_none=True)
+                    update = optimizer_update(
+                        self.model, self.optimizer, self.scaler, self.scheduler,
+                        self.config.get('max_grad_norm', 1.0),
+                    )
+                    monitor.record_update(update)
+                    self.step += int(update['updated'])
             yield dict(
-                epoch=epoch + 1, step=self.step, loss=sum(losses) / len(losses), lr=self.scheduler.get_last_lr()[0]
+                epoch=epoch + 1, step=self.step, loss=sum(losses) / len(losses), lr=self.scheduler.get_last_lr()[0], monitor=monitor.finish()
             )
 
     def save(self, output, tokenizer, classes, history):

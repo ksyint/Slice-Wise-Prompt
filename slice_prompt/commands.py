@@ -265,7 +265,7 @@ def compile_recipes():
                 if size == '3B' and (thickness, slices, rank, fusion) != (1, 16, 16, 1):
                     folder /= f'slices-{slices}'
         pending.append((key, folder / name, dict(preparation=preparation, training=training), name))
-    python_paths = set(sorted(key for key, _, _, _ in pending)[:108])
+    python_paths = set(sorted(key for key, _, _, _ in pending)[:98])
     for key, relative, value, name in pending:
         suffix = '.py' if key in python_paths else '.yaml'
         path = catalog_ROOT / relative.parent / (relative.name + suffix)

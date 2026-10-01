@@ -18,8 +18,7 @@ from slice_prompt.experiments.training import (
     TrainLoop,
     evaluate_records,
 )
-from slice_prompt.models.adaptation import QwenSliceVLM, MED3D_ID, MED3D_REVISION
-from huggingface_hub import snapshot_download
+from slice_prompt.models.adaptation import QwenSliceVLM
 from slice_prompt.commands import (
     export_manifest_cli,
     prepare_cli,
@@ -162,21 +161,23 @@ def download_weights_main():
     parser.add_argument('--with-teacher', action='store_true', help='Download all 7B baseline shards for distillation.')
     parser.add_argument('--local-dir', help='Write portable med3d/ and qwen/ subdirectories.')
     args = parser.parse_args()
-    patterns = (
-        None
-        if args.with_teacher
-        else ['*.json', '*.py', '*.txt', '*.model', 'merges.txt', 'model-00006-of-00007.safetensors']
-    )
-    from pathlib import Path
+    from slice_prompt.models.adaptation import prepare_visual_artifacts, prepare_language_artifacts
 
     visual = str(Path(args.local_dir) / 'med3d') if args.local_dir else None
     language = str(Path(args.local_dir) / 'qwen') if args.local_dir else None
-    print(
-        snapshot_download(
-            MED3D_ID, revision=MED3D_REVISION, allow_patterns=patterns, cache_dir=args.cache_dir, local_dir=visual
-        )
-    )
-    print(snapshot_download(args.language_model, cache_dir=args.cache_dir, local_dir=language))
+    prepared = {
+        'visual': prepare_visual_artifacts(
+            cache_dir=args.cache_dir,
+            destination=visual,
+            with_teacher=args.with_teacher,
+        ),
+        'language': prepare_language_artifacts(
+            args.language_model,
+            cache_dir=args.cache_dir,
+            destination=language,
+        ),
+    }
+    print(json.dumps(prepared, indent=2))
 
 
 def download_weights_cli():
@@ -189,11 +190,28 @@ def main():
     from slice_prompt.records.schema import manifest_cli
     from slice_prompt.records.vocabulary import vocabulary_cli
     from slice_prompt.cache import cache_prepare_cli
-    from slice_prompt.models.checkpoints import checkpoint_cli
+    from slice_prompt.models.checkpoints import checkpoint_cli, export_adapter_cli
     from slice_prompt.experiments.inference import session_cli
     from slice_prompt.experiments.grouped import report_cli
+    from slice_prompt.experiments.prepare_volumes import prepare_volumes_cli, cohort_cli, sampling_audit_cli
+    from slice_prompt.experiments.validation import fit_validated_cli, detailed_report_cli
+    from slice_prompt.experiments.validation import token_audit_cli, compare_preparation_cli
+    from slice_prompt.experiments.ablation import feature_cache_cli, prompt_ablation_cli, occlusion_cli
+    from slice_prompt.experiments.ablation import feature_audit_cli
 
     commands = {
+        'export-adapter': export_adapter_cli,
+        'feature-audit': feature_audit_cli,
+        'token-audit': token_audit_cli,
+        'compare-preparation': compare_preparation_cli,
+        'prepare-detailed': prepare_volumes_cli,
+        'cohorts': cohort_cli,
+        'sampling-audit': sampling_audit_cli,
+        'fit': fit_validated_cli,
+        'report-detailed': detailed_report_cli,
+        'feature-cache': feature_cache_cli,
+        'prompt-ablation': prompt_ablation_cli,
+        'occlusion': occlusion_cli,
         'manifest': manifest_cli,
         'vocabulary': vocabulary_cli,
         'prepare-cache': cache_prepare_cli,
