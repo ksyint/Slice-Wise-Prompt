@@ -2,8 +2,8 @@
 
 import numpy as np
 import torch
-from slice_prompt.model import class_balanced_focal
-from slice_prompt.volumes import patient_split, render_prompt, slice_contours
+from slice_prompt.models.qwen.adaptation import class_balanced_focal
+from slice_prompt.data.volumes.processing import patient_split, render_prompt, slice_contours
 
 
 def test_contour_interior_and_empty_slices():

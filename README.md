@@ -103,3 +103,19 @@ python prompt.py catalog --compile
 ```
 
 `prompt.py recipe` renders the selected contours, writes the resolved training configuration, and launches the CUDA Qwen training entrypoint. `--prepare-only` writes the paired dataset/configuration for a later training run.
+
+## Dataset records, resumable sessions, and reports
+
+Record validation, visual preparation, model adaptation, training state, and answer reporting live in separate nested packages under `slice_prompt/data`, `slice_prompt/models`, `slice_prompt/engine`, and `slice_prompt/evaluation`.
+
+```bash
+python prompt.py manifest --manifest data/source.jsonl
+python prompt.py prepare-cache --manifest data/source.jsonl --cache data/prompt-cache --output outputs/prepared --split
+python prompt.py vocabulary --manifest outputs/prepared/train.jsonl --prepared --output outputs/vocabulary.json
+python prompt.py infer-session --checkpoint outputs/qwen15b/last.pt --manifest outputs/prepared/test.jsonl --output outputs/qwen15b/session --device cuda
+python prompt.py report --predictions outputs/qwen15b/session/predictions.jsonl --output reports/qwen15b --bootstrap 1000
+```
+
+The visual cache reuses aligned contour stacks across questions. Training persists the answer mapping, class counts, complete epoch history, and random state alongside the trainable checkpoint. Prediction sessions preserve completed question IDs across `--resume` runs. Grouped evaluation exports class confusion, patient statistics, and optional anatomy or dataset tables.
+
+[Preparation and runtime guides](docs/index.md) document the record formats, cache identities, checkpoint continuation, offline models, and patient-level comparisons.

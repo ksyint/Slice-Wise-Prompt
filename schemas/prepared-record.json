@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prepared slice prompt",
+  "type": "object",
+  "required": [
+    "patient_id",
+    "prompt",
+    "question",
+    "answer",
+    "closed"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "answer": {
+      "type": "string"
+    },
+    "closed": {
+      "type": "boolean"
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "conversations": {
+      "type": "array"
+    },
+    "contour_voxels": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": true
+}

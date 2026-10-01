@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Closed answer vocabulary",
+  "type": "object",
+  "required": [
+    "format",
+    "classes",
+    "counts",
+    "normalization"
+  ],
+  "properties": {
+    "format": {
+      "const": "slice-answer-vocabulary-v1"
+    },
+    "classes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "counts": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "normalization": {
+      "enum": [
+        "exact",
+        "nfc",
+        "casefold"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

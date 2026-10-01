@@ -1,0 +1,1 @@
+{"id": "ct-a:spleen:0", "patient_id": "ct-a", "prompt": "../../outputs/prepared/sample_000000/prompt.npy", "question": "Within the blue-outlined area of the CT volume, is the spleen enlarged?", "answer": "No", "closed": true, "anatomy": "spleen", "dataset": "RadGenome-ChestCT"}

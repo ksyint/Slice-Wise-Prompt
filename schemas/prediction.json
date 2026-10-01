@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Slice answer prediction",
+  "type": "object",
+  "required": [
+    "id",
+    "patient_id",
+    "closed",
+    "answer",
+    "prediction"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "answer": {
+      "type": "string"
+    },
+    "closed": {
+      "type": "boolean"
+    },
+    "prediction": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "elapsed_seconds": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": true
+}

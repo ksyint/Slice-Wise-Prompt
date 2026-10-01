@@ -1,0 +1,1 @@
+{"id": "ct-a:spleen:0", "patient_id": "ct-a", "volume": "../../data/ct-a.nii.gz", "mask": "../../data/ct-a-spleen.nii.gz", "question": "Is the spleen enlarged?", "answer": "No", "closed": true, "anatomy": "spleen", "dataset": "RadGenome-ChestCT"}

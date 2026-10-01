@@ -1,13 +1,11 @@
 """Mixed-precision slice prompting and answer metrics."""
 
-import json
 import math
 import torch
 import torch.nn.functional as F
 import re
-from collections import Counter
-from slice_prompt.volumes import PromptDataset
-from slice_prompt.model import (
+from slice_prompt.data.volumes.processing import PromptDataset
+from slice_prompt.models.qwen.adaptation import (
     QwenSliceVLM,
     MED3D_ID,
     MED3D_REVISION,
@@ -15,7 +13,6 @@ from slice_prompt.model import (
     Med3DTeacher,
     sigmoid_distillation,
 )
-from pathlib import Path
 
 
 def model_defaults():
@@ -66,12 +63,18 @@ def add_dict_to_argparser(parser, defaults):
 
 
 def create_model_and_data(config, manifest, device):
+    from slice_prompt.data.records.schema import read_manifest
+    from slice_prompt.data.records.vocabulary import AnswerVocabulary
+    from slice_prompt.engine.checkpoints.runtime import validate_training_config
+
+    validate_training_config(config)
     require_cuda(device)
     data = PromptDataset(manifest, slices=config['slices'], image_size=config['image_size'])
-    counts = Counter(row['answer'] for row in data.rows if row.get('closed', False))
-    classes = {name: index for index, name in enumerate(sorted(counts))}
+    data.rows = read_manifest(manifest, prepared=True)
+    vocabulary = AnswerVocabulary.from_records(data.rows)
+    classes = vocabulary.classes
     model = QwenSliceVLM(config, len(classes)).to(device)
-    return model, data, model.tokenizer, classes, [counts[name] for name in classes]
+    return model, data, model.tokenizer, classes, vocabulary.counts
 
 
 def require_cuda(value='cuda'):
@@ -118,6 +121,9 @@ class TrainLoop:
         self.scheduler.load_state_dict(state['scheduler'])
         self.scaler.load_state_dict(state['scaler'])
         self.step, self.start_epoch = state['step'], state['epoch']
+        from slice_prompt.engine.checkpoints.runtime import restore_random_state
+
+        restore_random_state(state.get('random_state'), self.loader)
 
     def forward_loss(self, batch):
         batch = {
@@ -167,33 +173,21 @@ class TrainLoop:
                 if (index + 1) % accumulation == 0 or index + 1 == len(self.loader):
                     self.scaler.unscale_(self.optimizer)
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                    previous_scale = self.scaler.get_scale()
                     self.scaler.step(self.optimizer)
                     self.scaler.update()
-                    self.scheduler.step()
+                    if self.scaler.get_scale() >= previous_scale:
+                        self.scheduler.step()
+                        self.step += 1
                     self.optimizer.zero_grad(set_to_none=True)
-                    self.step += 1
             yield dict(
                 epoch=epoch + 1, step=self.step, loss=sum(losses) / len(losses), lr=self.scheduler.get_last_lr()[0]
             )
 
     def save(self, output, tokenizer, classes, history):
-        destination = Path(output)
-        destination.mkdir(parents=True, exist_ok=True)
-        torch.save(
-            dict(
-                trainable=self.model.trainable_state(),
-                classes=classes,
-                config=self.config,
-                optimizer=self.optimizer.state_dict(),
-                scheduler=self.scheduler.state_dict(),
-                scaler=self.scaler.state_dict(),
-                epoch=history[-1]['epoch'],
-                step=self.step,
-            ),
-            destination / 'last.pt',
-        )
-        tokenizer.save_pretrained(destination / 'tokenizer')
-        (destination / 'history.json').write_text(json.dumps(history, indent=2))
+        from slice_prompt.engine.checkpoints.runtime import save_training_checkpoint
+
+        save_training_checkpoint(self, output, tokenizer, classes, history)
 
 
 def normalize(text):

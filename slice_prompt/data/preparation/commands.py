@@ -9,8 +9,14 @@ import sys
 import yaml
 from pathlib import Path
 from PIL import Image
-from slice_prompt.volumes import load_pair, patient_split, render_prompt, rewrite_question, system_prompt
-from slice_prompt.training import require_cuda
+from slice_prompt.data.volumes.processing import (
+    load_pair,
+    patient_split,
+    render_prompt,
+    rewrite_question,
+    system_prompt,
+)
+from slice_prompt.engine.training.loop import require_cuda
 from itertools import product
 
 
@@ -195,7 +201,7 @@ def segment_cli():
     segment_main()
 
 
-catalog_ROOT = Path(__file__).resolve().parents[1]
+catalog_ROOT = Path(__file__).resolve().parents[3]
 WINDOWS = {'lung': dict(center=-600, width=1500), 'mediastinum': dict(center=40, width=400)}
 INDEX = catalog_ROOT / 'recipes/index.jsonl'
 
@@ -249,7 +255,7 @@ def catalog_cli():
     catalog_main()
 
 
-run_recipe_ROOT = Path(__file__).resolve().parents[1]
+run_recipe_ROOT = Path(__file__).resolve().parents[3]
 
 
 def prepare_command(recipe, manifest, output, seed, split):

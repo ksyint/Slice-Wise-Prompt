@@ -8,8 +8,8 @@ import torch
 from functools import partial
 from pathlib import Path
 from torch.utils.data import DataLoader
-from slice_prompt.volumes import pack_rows, PromptDataset
-from slice_prompt.training import (
+from slice_prompt.data.volumes.processing import pack_rows, PromptDataset
+from slice_prompt.engine.training.loop import (
     add_dict_to_argparser,
     create_model_and_data,
     data_defaults,
@@ -19,9 +19,15 @@ from slice_prompt.training import (
     TrainLoop,
     evaluate_records,
 )
-from slice_prompt.model import QwenSliceVLM, MED3D_ID, MED3D_REVISION
+from slice_prompt.models.qwen.adaptation import QwenSliceVLM, MED3D_ID, MED3D_REVISION
 from huggingface_hub import snapshot_download
-from slice_prompt.preparation import export_manifest_cli, prepare_cli, segment_cli, run_recipe_cli, catalog_cli
+from slice_prompt.data.preparation.commands import (
+    export_manifest_cli,
+    prepare_cli,
+    segment_cli,
+    run_recipe_cli,
+    catalog_cli,
+)
 
 
 def create_argparser():
@@ -40,6 +46,11 @@ def train_main():
     args = create_argparser().parse_args()
     device = require_cuda(args.device)
     th.manual_seed(args.seed)
+    import random
+    import numpy as np
+
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     config = dict(**model_defaults(), **data_defaults(), **training_defaults())
     config.update(yaml.safe_load(Path(args.config).read_text()))
     state = th.load(args.checkpoint, map_location=device, weights_only=False) if args.checkpoint else None
@@ -47,19 +58,25 @@ def train_main():
         config = state['config'].copy()
     config.update({key: getattr(args, key) for key in config if getattr(args, key, None) is not None})
     model, data, tokenizer, classes, counts = create_model_and_data(config, args.manifest, device)
-    if state and classes != state['classes']:
-        raise ValueError('Resuming requires the saved closed-answer class mapping.')
+    from slice_prompt.data.records.schema import manifest_digest
+    from slice_prompt.engine.checkpoints.runtime import check_resume
+
+    data_identity = manifest_digest(data.rows)
+    if state:
+        check_resume(state, config, classes, data_identity)
     loader = DataLoader(
         data,
         batch_size=config['batch_size'],
         shuffle=True,
+        generator=th.Generator().manual_seed(args.seed),
         num_workers=config['workers'],
         collate_fn=partial(pack_rows, tokenizer=tokenizer, classes=classes, max_length=config['max_length']),
     )
     loop = TrainLoop(model, loader, counts, config, device)
+    loop.manifest_digest = data_identity
     if state:
         loop.restore(state)
-    history = []
+    history = list(state.get('history', [])) if state else []
     for statistics in loop.run_loop():
         history.append(statistics)
         print(json.dumps(statistics), flush=True)
@@ -169,7 +186,20 @@ def download_weights_cli():
 def main():
     import sys
 
+    from slice_prompt.data.records.schema import manifest_cli
+    from slice_prompt.data.records.vocabulary import vocabulary_cli
+    from slice_prompt.data.preparation.cache import cache_prepare_cli
+    from slice_prompt.engine.checkpoints.runtime import checkpoint_cli
+    from slice_prompt.engine.inference.session.runner import session_cli
+    from slice_prompt.evaluation.vqa.grouped import report_cli
+
     commands = {
+        'manifest': manifest_cli,
+        'vocabulary': vocabulary_cli,
+        'prepare-cache': cache_prepare_cli,
+        'checkpoint': checkpoint_cli,
+        'infer-session': session_cli,
+        'report': report_cli,
         'train': train_cli,
         'infer': inference_cli,
         'evaluate': eval_cli,

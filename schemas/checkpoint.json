@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Slice checkpoint metadata",
+  "type": "object",
+  "required": [
+    "format",
+    "epoch",
+    "step",
+    "classes",
+    "config",
+    "vocabulary_digest"
+  ],
+  "properties": {
+    "format": {
+      "const": "slice-checkpoint-v2"
+    },
+    "epoch": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "step": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "classes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "config": {
+      "type": "object"
+    },
+    "vocabulary_digest": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
