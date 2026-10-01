@@ -1,7 +1,5 @@
 # Enhancing 3D Medical Vision-Language Models with Slice-wise Visual Prompt
 
-[Paper](https://openreview.net/pdf?id=lg9K5z0t0Y)
-
 Slice-wise visual prompting with **pretrained DCFormer, the Med3DVLM dual-stream MLP–Mixer, and Qwen2.5 0.5B / 1.5B / 3B**. The default is Qwen2.5-1.5B-Instruct with rank-16 LoRA, four-head MSSA, and 32 sampled axial slices.
 
 ## Model and training
