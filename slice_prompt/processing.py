@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from pathlib import Path
 from scipy import ndimage
 from torch.utils.data import Dataset
+from slice_prompt.records.rewriting import question_prefix, region_instruction
 
 
 def load_volume(path):
@@ -85,15 +86,11 @@ def render_prompt(volume, mask, color='blue', thickness=1, center=-600, width=15
 
 
 def rewrite_question(question, color='blue'):
-    return f'Within the {color}-outlined area of the CT volume, {question.strip()}'
+    return question_prefix(question, color)
 
 
 def system_prompt(color='blue', thickness=1):
-    return (
-        f'The CT slices contain a {color} boundary of thickness {thickness} pixel(s). '
-        'Answer the question using the marked region. Describe only the requested structure. '
-        'If the requested abnormality is absent, answer No finding. Keep the answer concise.'
-    )
+    return region_instruction(color, thickness)
 
 
 def patient_split(records, seed=42, fractions=(0.7, 0.1, 0.2)):

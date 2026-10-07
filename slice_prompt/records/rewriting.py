@@ -56,17 +56,17 @@ def question_prefix(question, color="red"):
     text = question.strip()
     if not text:
         raise ValueError("Cannot rewrite an empty question")
+    existing = re.compile(
+        r"^(?:Within the (?:red|blue)-outlined area of the CT volume,|Inside the (?:red|blue) boundary,)\s*",
+        re.I,
+    )
+    text = existing.sub("", text)
     tokens = re.findall(r"\w+", text.casefold())
     prefix = (
         f"Within the {color}-outlined area of the CT volume,"
         if tokens and tokens[0] in WH_WORDS
         else f"Inside the {color} boundary,"
     )
-    existing = re.compile(
-        r"^(?:Within the (?:red|blue)-outlined area of the CT volume,|Inside the (?:red|blue) boundary,)\s*",
-        re.I,
-    )
-    text = existing.sub("", text)
     return f"{prefix} {text}"
 
 
@@ -75,7 +75,7 @@ def region_instruction(color="red", thickness=1):
         raise ValueError("Region instructions need an odd positive contour thickness")
     return (
         f"The CT volume contains a {color} outline with a thickness of {thickness} pixel(s). "
-        "Use the outlined region to answer the question. "
+        "Restrict visual reasoning to voxels inside this outline; ignore other regions. "
         "When several structures occur inside the outline, describe only the requested structure. "
         "For a closed question with no relevant finding, answer No finding. "
         "For an open question with no relevant abnormality, answer No, the requested abnormality is absent. "
